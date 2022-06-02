@@ -10,7 +10,7 @@ struct Point
     int y;
 };
 
-class Circle
+class Chicken
 {
 
 protected:
@@ -21,7 +21,7 @@ protected:
     int speed;
 
 public:
-    Circle(int posX, int posY, float radius, Color color, int speed)
+    Chicken(int posX, int posY, float radius, Color color, int speed)
     {
         this->posX = posX;
         this->posY = posY;
@@ -159,20 +159,20 @@ public:
             && y < posY + height;
     }
 
-    bool hasCollided(Circle circle)
+    bool hasCollided(Chicken chicken)
     {
         Point centre;
         centre.x = posX + (width / 2);
         centre.y = posY + (height / 2);
 
-        Point closestPointToCircle = circle.getClosestPoint(centre);
-        DrawCircle(closestPointToCircle.x, closestPointToCircle.y, 2.0f, YELLOW);
+        Point closestPointToChicken = chicken.getClosestPoint(centre);
+        DrawCircle(closestPointToChicken.x, closestPointToChicken.y, 2.0f, YELLOW);
 
-        return pointIsInside(closestPointToCircle.x, closestPointToCircle.y)
-            || circle.pointIsInside(posX, posY) 
-            || circle.pointIsInside(posX, posY + height) 
-            || circle.pointIsInside(posX + width, posY) 
-            || circle.pointIsInside(posX + width, posY + height);
+        return pointIsInside(closestPointToChicken.x, closestPointToChicken.y)
+            || chicken.pointIsInside(posX, posY) 
+            || chicken.pointIsInside(posX, posY + height) 
+            || chicken.pointIsInside(posX + width, posY) 
+            || chicken.pointIsInside(posX + width, posY + height);
     }
 
     int getLeftSide()
@@ -198,7 +198,7 @@ public:
 class Game {
 
 protected:
-    Circle circle = Circle(50, windowHeight / 2, 20.0f, GREEN, 10);
+    Chicken chicken = Chicken(50, windowHeight / 2, 20.0f, GREEN, 10);
     Axe axe = Axe(windowWidth / 2 - 25, windowHeight / 2, 50, 50, RED, 10);
     int score = 0;
     bool gameIsOver = false;
@@ -207,7 +207,7 @@ protected:
 
     void init()
     {
-        circle = Circle(50, windowHeight / 2, 20.0f, GREEN, 10);
+        chicken = Chicken(50, windowHeight / 2, 20.0f, GREEN, 10);
         axe = Axe(windowWidth / 2 - 25, windowHeight / 2, 50, 50, RED, 10);
         score = 0;
         gameIsOver = false;
@@ -236,14 +236,14 @@ public:
     {
         axe.updatePositon();
 
-        circle.handleInput();
+        chicken.handleInput();
 
-        if (axe.hasCollided(circle))
+        if (axe.hasCollided(chicken))
         {
             gameIsOver = true;
         }
 
-        Point centre = circle.getCentre();
+        Point centre = chicken.getCentre();
         bool wasOnRightNowOnLeft = isOnRightSide && centre.x < axe.getLeftSide();
         bool wasOnLeftNowOnRight = !isOnRightSide && centre.x > axe.getRightSide();
         bool changedSides = wasOnRightNowOnLeft || wasOnLeftNowOnRight;
@@ -278,7 +278,7 @@ public:
     {
         ClearBackground(BLUE);
         axe.draw();
-        circle.draw();
+        chicken.draw();
         DrawText(TextFormat("Score: %03i", score), 10, 10, 20, BLACK);
     }
 
@@ -293,7 +293,7 @@ public:
 
 int main()
 {
-    InitWindow(windowWidth, windowHeight, "Axe Game");
+    InitWindow(windowWidth, windowHeight, "Chicken");
     Game game = Game();
 
     SetTargetFPS(30);
