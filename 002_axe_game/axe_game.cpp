@@ -6,53 +6,55 @@ int windowHeight = 480;
 class Circle {
 
 protected:
-    int x;
-    int y;
+    int posX;
+    int posY;
     float radius;
     Color color;
+    int speed;
 
 public:
-    Circle(int x, int y, float radius, Color color) {
-        this->x = x;
-        this->y = y;
+    Circle(int posX, int posY, float radius, Color color, int speed) {
+        this->posX = posX;
+        this->posY = posY;
         this->radius = radius;
         this->color = color;
+        this->speed = speed;
     }
 
     void draw()
     {
-        DrawCircle(x, y, radius, color);
+        DrawCircle(posX, posY, radius, color);
     }
 
     void moveUp()
     {
-        if (y - radius - 1 >= 0)
+        if (posY - radius - speed >= 0)
         {
-            y -= 1;
+            posY -= speed;
         }
     }
 
     void moveDown()
     {
-        if (y + radius + 1 <= windowHeight)
+        if (posY + radius + speed <= windowHeight)
         {
-            y += 1;
+            posY += speed;
         }
     }
 
     void moveLeft()
     {
-        if (x - radius - 1 >= 0)
+        if (posX - radius - speed >= 0)
         {
-            x -= 1;
+            posX -= speed;
         }
     }
 
     void moveRight()
     {
-        if (x + radius + 1 <= windowWidth)
+        if (posX + radius + speed <= windowWidth)
         {
-            x += 1;
+            posX += speed;
         }
     }
 
@@ -72,21 +74,78 @@ public:
             this->moveRight();
         }
     }
+
+    bool pointIsInside(int x, int y)
+    {
+        float distX = static_cast<float>(posX - x);
+        float distY = static_cast<float>(posY - y);
+        return (distX * distX) + (distY * distY) - (radius * radius) <= 0;
+    }
+};
+
+class Axe
+{
+
+protected:
+    int posX;
+    int posY;
+    int width;
+    int height;
+    Color color;
+    int speed;
+
+public:
+    Axe(int posX, int posY, int width, int height, Color color, int speed)
+    {
+        this->posX = posX;
+        this->posY = posY;
+        this->width = width;
+        this->height = height;
+        this->color = color;
+        this->speed = speed;
+    }
+
+    void draw()
+    {
+        DrawRectangle(posX, posY, width, height, color);
+    }
+
+    void updatePositon()
+    {
+        if (posY + speed < 0 || posY + height + speed > windowHeight)
+        {
+            speed *= -1;
+        }
+        posY += speed;
+    }
+
+    bool hasCollided(Circle circle) {
+        return circle.pointIsInside(posX,         posY)
+            || circle.pointIsInside(posX,         posY + height)
+            || circle.pointIsInside(posX + width, posY)
+            || circle.pointIsInside(posX + width, posY + height);
+    }
 };
 
 int main()
 {
-
     InitWindow(windowWidth, windowHeight, "Axe Game");
-    Circle circle = Circle(20, 20, 20.0f, RED);
+    Circle circle = Circle(windowWidth / 2, windowHeight / 2, 20.0f, GREEN, 10);
+    Axe axe = Axe(20, 20, 50, 50, RED, 10);
 
-    SetTargetFPS(60);
+    SetTargetFPS(30);
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(BLUE);
+        //axe.updatePositon();
+        axe.draw();
+        if (axe.hasCollided(circle)) {
+            break;
+        }
         circle.handleInput();
         circle.draw();
+
         EndDrawing();
     }
     CloseWindow();
