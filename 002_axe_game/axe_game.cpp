@@ -77,9 +77,9 @@ public:
 
     bool pointIsInside(int x, int y)
     {
-        float distX = static_cast<float>(posX - x);
-        float distY = static_cast<float>(posY - y);
-        return (distX * distX) + (distY * distY) - (radius * radius) <= 0;
+        float distX = posX - x;
+        float distY = posY - y;
+        return (distX * distX) + (distY * distY) - (radius * radius) < 0;
     }
 };
 
