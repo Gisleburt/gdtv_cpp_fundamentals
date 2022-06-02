@@ -80,6 +80,7 @@ int main()
     InitWindow(windowWidth, windowHeight, "Axe Game");
     Circle circle = Circle(20, 20, 20.0f, RED);
 
+    SetTargetFPS(60);
     while (!WindowShouldClose())
     {
         BeginDrawing();
