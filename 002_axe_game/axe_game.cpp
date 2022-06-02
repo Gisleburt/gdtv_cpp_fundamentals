@@ -1,9 +1,17 @@
 #include "raylib.h"
+#include <math.h>
 
 int windowWidth = 640;
 int windowHeight = 480;
 
-class Circle {
+struct Point
+{
+    int x;
+    int y;
+};
+
+class Circle
+{
 
 protected:
     int posX;
@@ -13,7 +21,8 @@ protected:
     int speed;
 
 public:
-    Circle(int posX, int posY, float radius, Color color, int speed) {
+    Circle(int posX, int posY, float radius, Color color, int speed)
+    {
         this->posX = posX;
         this->posY = posY;
         this->radius = radius;
@@ -64,13 +73,16 @@ public:
         {
             this->moveUp();
         }
-        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) {
+        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+        {
             this->moveDown();
         }
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
+        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        {
             this->moveLeft();
         }
-        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
+        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        {
             this->moveRight();
         }
     }
@@ -80,6 +92,26 @@ public:
         float distX = posX - x;
         float distY = posY - y;
         return (distX * distX) + (distY * distY) - (radius * radius) < 0;
+    }
+
+    Point getClosestPoint(Point to)
+    {
+        float distX = posX - to.x;
+        float distY = posY - to.y;
+        float distance = sqrt((distX * distX) + (distY * distY));
+
+        Point point;
+        point.x = posX - (distX / distance * radius);
+        point.y = posY - (distY / distance * radius);
+        return point;
+    }
+
+    Point getCentre()
+    {
+        Point centre;
+        centre.x = posX;
+        centre.y = posY;
+        return centre;
     }
 };
 
@@ -119,32 +151,158 @@ public:
         posY += speed;
     }
 
-    bool hasCollided(Circle circle) {
-        return circle.pointIsInside(posX,         posY)
-            || circle.pointIsInside(posX,         posY + height)
-            || circle.pointIsInside(posX + width, posY)
+    bool pointIsInside(int x, int y)
+    {
+        return x > posX
+            && x < posX + width
+            && y > posY
+            && y < posY + height;
+    }
+
+    bool hasCollided(Circle circle)
+    {
+        Point centre;
+        centre.x = posX + (width / 2);
+        centre.y = posY + (height / 2);
+
+        Point closestPointToCircle = circle.getClosestPoint(centre);
+        DrawCircle(closestPointToCircle.x, closestPointToCircle.y, 2.0f, YELLOW);
+
+        return pointIsInside(closestPointToCircle.x, closestPointToCircle.y)
+            || circle.pointIsInside(posX, posY) 
+            || circle.pointIsInside(posX, posY + height) 
+            || circle.pointIsInside(posX + width, posY) 
             || circle.pointIsInside(posX + width, posY + height);
+    }
+
+    int getLeftSide()
+    {
+        return posX;
+    }
+
+    int getRightSide()
+    {
+        return posX + width;
+    }
+
+    void speedUp()
+    {
+        if (speed > 0) {
+            speed += 1;
+        } else {
+            speed -= 1;
+        }
+    }
+};
+
+class Game {
+
+protected:
+    Circle circle = Circle(50, windowHeight / 2, 20.0f, GREEN, 10);
+    Axe axe = Axe(windowWidth / 2 - 25, windowHeight / 2, 50, 50, RED, 10);
+    int score = 0;
+    bool gameIsOver = false;
+
+    bool isOnRightSide = false;
+
+    void init()
+    {
+        circle = Circle(50, windowHeight / 2, 20.0f, GREEN, 10);
+        axe = Axe(windowWidth / 2 - 25, windowHeight / 2, 50, 50, RED, 10);
+        score = 0;
+        gameIsOver = false;
+        isOnRightSide = false;
+    }
+
+public:
+    Game()
+    {
+        init();
+    }
+
+    void update()
+    {
+        if (gameIsOver)
+        {
+            updateGameOver();
+        }
+        else
+        {
+            updateGame();
+        }
+    }
+
+    void updateGame()
+    {
+        axe.updatePositon();
+
+        circle.handleInput();
+
+        if (axe.hasCollided(circle))
+        {
+            gameIsOver = true;
+        }
+
+        Point centre = circle.getCentre();
+        bool wasOnRightNowOnLeft = isOnRightSide && centre.x < axe.getLeftSide();
+        bool wasOnLeftNowOnRight = !isOnRightSide && centre.x > axe.getRightSide();
+        bool changedSides = wasOnRightNowOnLeft || wasOnLeftNowOnRight;
+        if (changedSides)
+        {
+            isOnRightSide = !isOnRightSide;
+            score++;
+            axe.speedUp();
+        }
+    }
+
+    void updateGameOver()
+    {
+        if (IsKeyDown(KEY_R)) {
+            init();
+        }
+    }
+
+    void draw()
+    {
+        if (gameIsOver)
+        {
+            drawGameOver();
+        }
+        else
+        {
+            drawGame();
+        }
+    }
+
+    void drawGame()
+    {
+        ClearBackground(BLUE);
+        axe.draw();
+        circle.draw();
+        DrawText(TextFormat("Score: %03i", score), 10, 10, 20, BLACK);
+    }
+
+    void drawGameOver()
+    {
+        ClearBackground(WHITE);
+        DrawText("Game Over", 50, 50, 58, BLACK);
+        DrawText(TextFormat("Score: %03i", score), 50, 100, 48 , BLACK);
+        DrawText("Press R to restart", 50, 150, 48, BLACK);
     }
 };
 
 int main()
 {
     InitWindow(windowWidth, windowHeight, "Axe Game");
-    Circle circle = Circle(windowWidth / 2, windowHeight / 2, 20.0f, GREEN, 10);
-    Axe axe = Axe(20, 20, 50, 50, RED, 10);
+    Game game = Game();
 
     SetTargetFPS(30);
     while (!WindowShouldClose())
     {
         BeginDrawing();
-        ClearBackground(BLUE);
-        //axe.updatePositon();
-        axe.draw();
-        if (axe.hasCollided(circle)) {
-            break;
-        }
-        circle.handleInput();
-        circle.draw();
+
+        game.update();
+        game.draw();
 
         EndDrawing();
     }
