@@ -85,24 +85,16 @@ class Character
     float velocityUp = 0;
     bool onGround = false;
 
-
     const float gravity = (9.8 * 2) / fps;
-    const float jumpForce = 13.0f;
-    const float maxJumps = 2;
-    int numJumps{maxJumps};
+    const float jumpForce = 10.0f;
+    const unsigned int maxJumps = 2;
+    unsigned int numJumps{maxJumps};
 
-    const Color color = BLUE;
     Sprite sprite = Sprite("textures/scarfy.png", 1, 6, 10);
-    int width;
-    int height;
+    unsigned int width = sprite.getWidth();
+    unsigned int height = sprite.getWidth();
 
 public:
-    Character()
-    {
-        width = sprite.getWidth();
-        height = sprite.getHeight();
-    }
-
     void jump()
     {
         if (numJumps > 0) {
