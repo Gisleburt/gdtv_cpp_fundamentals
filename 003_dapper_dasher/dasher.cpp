@@ -78,26 +78,35 @@ public:
 };
 
 class Nebula
-{ 
-    float posX{100};
-    float posY{100};
+{
+    Vector2 pos {100.0, 100.0};
+    Vector2 velocity {0.0, 0.0};
 
     Sprite sprite = Sprite("textures/12_nebula_spritesheet.png", 8, 8, 61, 61);
     unsigned int width = sprite.getWidth();
     unsigned int height = sprite.getWidth();
 
 public:
+    Nebula(float posX, float posY, float velocityX, float velocityY)
+    {
+        pos = {posX, posY};
+        velocity = {velocityX, velocityY};
+    }
+
     void update(float deltaTime)
     {
+        pos.x += velocity.x * deltaTime;
+        pos.y += velocity.y * deltaTime;
         sprite.update(deltaTime);
     }
 
     void draw()
     {
-        Vector2 pos = {
-            posX,
-            (windowHeight - posY) - height};
-        sprite.draw(pos);
+        Vector2 alteredPos = {
+            pos.x,
+            (windowHeight - pos.y) - height
+        };
+        sprite.draw(alteredPos);
     }
 };
 
@@ -189,11 +198,12 @@ public:
 
 int main()
 {
+    const float gameSpeed = 300;
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
     SetTargetFPS(fps);
     Character character = Character();
     Controller controller = Controller(&character);
-    Nebula nebula = Nebula();
+    Nebula nebula = Nebula(windowWidth, 0.0, -gameSpeed, 0.0);
 
     while (!WindowShouldClose())
     {
