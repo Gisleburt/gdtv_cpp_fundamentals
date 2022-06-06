@@ -20,16 +20,6 @@ class Sprite
 
     Texture2D texture;
 
-    void nextFrame()
-    {
-        frame += 1;
-        if (frame >= perImage)
-        {
-            frame = 0;
-            nextImage();
-        }
-    }
-
     void nextImage()
     {
         column += 1;
@@ -70,9 +60,18 @@ public:
         return height;
     }
 
+    void animateNextFrame()
+    {
+        frame += 1;
+        if (frame >= perImage)
+        {
+            frame = 0;
+            nextImage();
+        }
+    }
+
     void draw(Vector2 pos)
     {
-        nextFrame();
         Rectangle source;
         source.width = width;
         source.height = height;
@@ -115,6 +114,7 @@ public:
         posY += velocityUp;
         if (posY <= 0)
         {
+            sprite.animateNextFrame();
             posY = 0;
             velocityUp = 0;
             onGround = true;
