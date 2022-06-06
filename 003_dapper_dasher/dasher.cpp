@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <cmath>
 
 const int windowWidth{640};
 const int windowHeight{480};
@@ -11,35 +12,22 @@ class Sprite
     unsigned int width;
     unsigned int nRows;
     unsigned int nColumns;
+    unsigned int nFrames;
 
-    unsigned int row{0};
-    unsigned int column{0};
+    unsigned int frame;
 
-    unsigned int perImage;
-    unsigned int frame{0};
+    float seconds{0};
+    float secondsPerFrame;
 
     Texture2D texture;
 
-    void nextImage()
-    {
-        column += 1;
-        if (column >= nColumns)
-        {
-            column = 0;
-            row += 1;
-            if (row >= nRows)
-            {
-                row = 0;
-            }
-        }
-    }
-
 public:
-    Sprite(const char *fileName, unsigned int rows, unsigned int columns, unsigned int framesPerImage)
+    Sprite(const char *fileName, unsigned int rows, unsigned int columns, unsigned int frames, unsigned int fps)
     {
-        perImage = framesPerImage;
+        secondsPerFrame = 1.0f/fps;
         nRows = rows;
         nColumns = columns;
+        nFrames = frames;
         texture = LoadTexture(fileName);
         height = texture.height / rows;
         width = texture.width / columns;
@@ -60,24 +48,56 @@ public:
         return height;
     }
 
-    void animateNextFrame()
+    void update(float deltaTime )
     {
-        frame += 1;
-        if (frame >= perImage)
+        seconds += deltaTime;
+        if (seconds > secondsPerFrame)
         {
-            frame = 0;
-            nextImage();
+            seconds = fmod(seconds, secondsPerFrame);
+            frame += 1;
+            frame = frame % nFrames;
         }
+    }
+
+    Rectangle framePos()
+    {
+        unsigned int column = frame % nColumns;
+        unsigned int row = frame / nRows;
+        return {
+            (float)(width * column),
+            (float)(height * row),
+            (float)width,
+            (float)height,
+        };
     }
 
     void draw(Vector2 pos)
     {
-        Rectangle source;
-        source.width = width;
-        source.height = height;
-        source.x = width * column;
-        source.y = height * row;
-        DrawTextureRec(texture, source, pos, WHITE);
+        DrawTextureRec(texture, framePos(), pos, WHITE);
+    }
+};
+
+class Nebula
+{ 
+    float posX{100};
+    float posY{100};
+
+    Sprite sprite = Sprite("textures/12_nebula_spritesheet.png", 8, 8, 61, 61);
+    unsigned int width = sprite.getWidth();
+    unsigned int height = sprite.getWidth();
+
+public:
+    void update(float deltaTime)
+    {
+        sprite.update(deltaTime);
+    }
+
+    void draw()
+    {
+        Vector2 pos = {
+            posX,
+            (windowHeight - posY) - height};
+        sprite.draw(pos);
     }
 };
 
@@ -89,12 +109,15 @@ class Character
     float velocityUp = 0;
     bool onGround = false;
 
-    const float gravity = (9.8 * 2) / fps;
-    const float jumpForce = 10.0f;
-    const unsigned int maxJumps = 2;
+    const float forceScale = 50.0f;
+    const float gravity = 9.8f * forceScale;
+    const float jumpForce = 8.0f * forceScale;
+    const unsigned int maxJumps = 2; // 0 for no jumping, 1 for normal jumping, 2 or more for air jumping
     unsigned int numJumps{maxJumps};
+    const float jumpGracePeriod{0.3};
+    float jumpGraceTimer{0.0};
 
-    Sprite sprite = Sprite("textures/scarfy.png", 1, 6, 10);
+    Sprite sprite = Sprite("textures/scarfy.png", 1, 6, 6, 6);
     unsigned int width = sprite.getWidth();
     unsigned int height = sprite.getWidth();
 
@@ -105,20 +128,33 @@ public:
             numJumps--;
             velocityUp = jumpForce;
             onGround = false;
+        } else {
+            jumpGraceTimer = jumpGracePeriod; // Allow jumping if the player pressed the jump button _just_ before the ground
         }
     }
 
-    void update()
+    void update(float deltaTime)
     {
-        velocityUp -= gravity;
-        posY += velocityUp;
+        velocityUp -= gravity * deltaTime;
+        posY += velocityUp * deltaTime;
+
         if (posY <= 0)
         {
-            sprite.animateNextFrame();
+            sprite.update(deltaTime);
             posY = 0;
             velocityUp = 0;
             onGround = true;
             numJumps = maxJumps;
+        }
+
+        // Jump delayed while being in the air
+        if (jumpGraceTimer > 0)
+        {
+            jumpGraceTimer -= deltaTime; // doesn't matter if it goes negative
+            if (onGround)
+            {
+                jump();
+            }
         }
     }
 
@@ -157,16 +193,20 @@ int main()
     SetTargetFPS(fps);
     Character character = Character();
     Controller controller = Controller(&character);
+    Nebula nebula = Nebula();
 
     while (!WindowShouldClose())
     {
         controller.checkInput();
-        character.update();
+        float deltaTime = GetFrameTime();
+        character.update(deltaTime);
+        nebula.update(deltaTime);
 
         BeginDrawing();
         ClearBackground(WHITE);
 
         character.draw();
+        nebula.draw();
 
         EndDrawing();
     }
