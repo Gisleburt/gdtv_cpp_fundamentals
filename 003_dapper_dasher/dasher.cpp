@@ -55,6 +55,11 @@ public:
         width = texture.width / columns;
     }
 
+    ~Sprite()
+    {
+        UnloadTexture(texture);
+    }
+
     unsigned int getWidth()
     {
         return width;
