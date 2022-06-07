@@ -6,6 +6,13 @@ const int windowHeight{480};
 const int fps{60};
 const int meterInPixels{40};
 
+class GameObject
+{
+public:
+    virtual void update(float deltaTime) = 0;
+    virtual void draw() = 0;
+};
+
 class Sprite
 {
     unsigned int height;
@@ -48,7 +55,7 @@ public:
         return height;
     }
 
-    void update(float deltaTime )
+    void update(float deltaTime)
     {
         seconds += deltaTime;
         if (seconds > secondsPerFrame)
@@ -77,7 +84,7 @@ public:
     }
 };
 
-class Nebula
+class Nebula : GameObject
 {
     Vector2 pos {100.0, 100.0};
     Vector2 velocity {0.0, 0.0};
@@ -110,7 +117,7 @@ public:
     }
 };
 
-class Character
+class Character : GameObject
 {
     float posX{0};
     float posY{0};
@@ -126,7 +133,7 @@ class Character
     const float jumpGracePeriod{0.3};
     float jumpGraceTimer{0.0};
 
-    Sprite sprite = Sprite("textures/scarfy.png", 1, 6, 6, 6);
+    Sprite sprite = Sprite("textures/scarfy.png", 1, 6, 6, 12);
     unsigned int width = sprite.getWidth();
     unsigned int height = sprite.getWidth();
 
