@@ -1,10 +1,9 @@
 #include "raylib.h"
 #include <cmath>
+#include <vector>
 
 const int windowWidth{640};
 const int windowHeight{480};
-const int fps{60};
-const int meterInPixels{40};
 
 class GameObject
 {
@@ -203,29 +202,57 @@ public:
     }
 };
 
-int main()
+class Game
 {
-    const float gameSpeed = 300;
-    InitWindow(windowWidth, windowHeight, "Dapper Dasher");
-    SetTargetFPS(fps);
     Character character = Character();
     Controller controller = Controller(&character);
-    Nebula nebula = Nebula(windowWidth, 0.0, -gameSpeed, 0.0);
+    std::vector<Nebula> nebulas{};
+    unsigned int score{0};
+    const float gameSpeed = 300;
 
-    while (!WindowShouldClose())
+public:
+    Game(unsigned int targetFps)
+    {
+        SetTargetFPS(targetFps);
+    }
+
+    ~Game()
+    {
+        CloseWindow();
+    }
+
+    void tick()
     {
         controller.checkInput();
         float deltaTime = GetFrameTime();
-        character.update(deltaTime);
-        nebula.update(deltaTime);
-
+        
         BeginDrawing();
         ClearBackground(WHITE);
 
+        character.update(deltaTime);
         character.draw();
-        nebula.draw();
+        for (Nebula nebula : nebulas)
+        {
+            nebula.update(deltaTime);
+            nebula.update(deltaTime);
+        }
 
         EndDrawing();
     }
-    CloseWindow();
+
+    bool shouldContinue()
+    {
+        return !WindowShouldClose();
+    }
+};
+
+int main()
+{
+    const unsigned int fps{60};
+    InitWindow(windowWidth, windowHeight, "Dapper Dasher");
+    Game game = Game(fps);
+    while (game.shouldContinue())
+    {
+        game.tick();
+    }
 }
